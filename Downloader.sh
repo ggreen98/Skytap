@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MAX_PARALLEL=2    # number of curl jobs at once
-URL_FILE="ARL_temp_file_list.txt"
-DEST_DIR="$(dirname "$0")/ARL_Files"
+URL_FILE="txt_files/ARL_temp_file_list.txt"
+DEST_DIR="ARL_Files"
 mkdir -p "$DEST_DIR"
 
-download_one() {
-    local url="$1"
-    local name=$(basename "$url")
+# Tune these:
+MAX_FILES_AT_ONCE=4      # maps to aria2c -j (how many files)
+CONNS_PER_FILE=8        # aria2c -x
+SPLITS_PER_FILE=8       # aria2c -s
 
-    curl -L \
-         --retry 5 \
-         --retry-delay 5 \
-         --retry-max-time 600 \
-         -C - \
-         -o "$DEST_DIR/$name" \
-         "$url" \
-         >/dev/null 2>/dev/null
-}
+echo "Using URL list: $URL_FILE"
+echo "Downloading to: $DEST_DIR"
+echo "Max files at once: $MAX_FILES_AT_ONCE"
+echo "Connections per file: $CONNS_PER_FILE, splits: $SPLITS_PER_FILE"
 
-export -f download_one
-export DEST_DIR
-
-grep -v '^[[:space:]]*$' "$URL_FILE" | \
-    parallel -j "$MAX_PARALLEL" download_one {}
-
+aria2c --no-conf \
+  -x "$CONNS_PER_FILE" \
+  -s "$SPLITS_PER_FILE" \
+  -j "$MAX_FILES_AT_ONCE" \
+  --continue=true \
+  --max-tries=5 \
+  --file-allocation=none \
+  -d "$DEST_DIR" \
+  -i "$URL_FILE"

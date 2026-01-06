@@ -74,4 +74,4 @@ if __name__ == "__main__":
 
             current += dt.timedelta(days=1)
 
-    print("filelist.txt created.")
+    print("ARLfilelist.txt created. This file contains all the URLs for HRRR ARL data you intend to download.")
