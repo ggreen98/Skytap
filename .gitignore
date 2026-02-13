@@ -1,5 +1,6 @@
 # Ignore virtual environment
 .venv/
+__pycache__/
 
 # Ignore text_files, ARL_Files, and Trajectory_Files directorys
 txt_files/
@@ -7,9 +8,12 @@ ARL_Files/
 Trajectory_Files/
 Temp_HYSPLIT_Dirs/
 hysplit/
+hysplit_linux/
 
 # Ignore config file
 Config.yaml
+state.yaml
+Gemini.md
 
-# Ignore system files
+# Ignore system fil
 .DS_Store

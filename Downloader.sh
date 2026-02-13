@@ -2,13 +2,13 @@
 set -euo pipefail
 
 URL_FILE="txt_files/ARL_temp_file_list.txt"
-DEST_DIR="ARL_Files"
+DEST_DIR="${DEST_DIR:-ARL_Files}"
 mkdir -p "$DEST_DIR"
 
 # Tune these:
 MAX_FILES_AT_ONCE=4      # maps to aria2c -j (how many files)
-CONNS_PER_FILE=8        # aria2c -x
-SPLITS_PER_FILE=8       # aria2c -s
+CONNS_PER_FILE=16        # aria2c -x
+SPLITS_PER_FILE=16       # aria2c -s
 
 echo "Using URL list: $URL_FILE"
 echo "Downloading to: $DEST_DIR"

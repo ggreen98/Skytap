@@ -1,0 +1,15 @@
+# Git and Docker exclusions
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.DS_Store
+
+# Data directories (should be mounted)
+ARL_Files/
+Trajectory_Files/
+Temp_HYSPLIT_Dirs/
+
+# HYSPLIT binaries (platform specific, should be mounted)
+hysplit/

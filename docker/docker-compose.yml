@@ -1,0 +1,24 @@
+services:
+  skytap:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    platform: linux/amd64
+    container_name: skytap_runner
+    volumes:
+      # Mount configuration and state from project root
+      - ../Config.yaml:/app/Config.yaml
+      - ../state.yaml:/app/state.yaml
+      
+      # Mount data directories for persistence from project root
+      - ../ARL_Files:/app/ARL_Files
+      - ../Trajectory_Files:/app/Trajectory_Files
+      - ../txt_files:/app/txt_files
+      
+      # Mount HYSPLIT directory from project root
+      - ../hysplit:/app/hysplit
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+    
+    command: ["python", "Skytap_Controller.py", "--yes"]
