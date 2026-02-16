@@ -1,0 +1,34 @@
+#!/bin/bash
+# Skytap Launcher for Mac and Linux
+# Uses image from GitHub Container Registry (GHCR)
+
+IMAGE="ghcr.io/ggreen98/skytap:latest"
+
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+  echo "❌ Error: Docker is not running."
+  echo "Please start Docker Desktop and try again."
+  exit 1
+fi
+
+# Pull the latest image
+echo "🔄 Checking for updates..."
+docker pull $IMAGE
+
+# Run the container
+# Mounts local config and data into the pre-built image
+docker run -it --rm \
+  --platform linux/amd64 \
+  -v "$(pwd)/Config.yaml:/app/Config.yaml" \
+  -v "$(pwd)/state.yaml:/app/state.yaml" \
+  -v "$(pwd)/ARL_Files:/app/ARL_Files" \
+  -v "$(pwd)/Trajectory_Files:/app/Trajectory_Files" \
+  -v "$(pwd)/txt_files:/app/txt_files" \
+  -v "$(pwd)/Temp_HYSPLIT_Dirs:/app/Temp_HYSPLIT_Dirs" \
+  -v "$(pwd)/hysplit:/app/hysplit" \
+  -e PYTHONUNBUFFERED=1 \
+  $IMAGE python Skytap_Controller.py --yes
