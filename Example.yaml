@@ -39,7 +39,7 @@ hysplit:
   hours_utc: [0, 6, 12, 18] # Daily start hours for trajectories
   step_hours: 24            # Spacing between days
   vert_motion: 0            # Vertical motion method (0=data vertical velocity)
-  top_of_model: 10000       # Top of model domain (meters AGL)
+  top_of_model: 15100       # Top of model domain (meters AGL)
   max_workers: 12           # Number of parallel processes (CPU cores) to use
 
 # --- Site Configurations ---

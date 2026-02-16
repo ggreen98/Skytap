@@ -208,7 +208,9 @@ def make_run_dirs(cfg, valid_datetimes):
                     cfg['site_hysplit_configs'][site]['lon'],
                     cfg['site_hysplit_configs'][site]['start_height'],
                     cfg['site_hysplit_configs'][site]['duration'],
-                    Path(cfg['hysplit']['met_dir'])
+                    Path(cfg['hysplit']['met_dir']),
+                    top_agl_m=cfg['hysplit'].get('top_of_model', 10000.0),
+                    vert_motion=cfg['hysplit'].get('vert_motion', 0)
                     )
     
     print(f"All CONTROL files written for period {valid_datetimes[0]} to {valid_datetimes[-1]}")

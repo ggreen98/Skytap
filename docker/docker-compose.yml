@@ -14,6 +14,7 @@ services:
       - ../ARL_Files:/app/ARL_Files
       - ../Trajectory_Files:/app/Trajectory_Files
       - ../txt_files:/app/txt_files
+      - ../Temp_HYSPLIT_Dirs:/app/Temp_HYSPLIT_Dirs
       
       # Mount HYSPLIT directory from project root
       - ../hysplit:/app/hysplit
