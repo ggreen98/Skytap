@@ -14,8 +14,8 @@ Skytap is designed to be run as a portable tool. You do not need to install Pyth
 2.  **Configuration**:
     *   **Create Config.yaml**: Copy `Example.yaml` and rename the copy to `Config.yaml`. Open it to set your coordinates and dates.
     *   **Crucial Step**: You **must** create the `Config.yaml` file *before* running the launcher for the first time. If you run the launcher first, Docker may create a *folder* named `Config.yaml` by mistake, which you will need to delete.
-    *   **HYSPLIT Binaries**: You **must** provide the **Linux (x86_64)** version of HYSPLIT. 
-        1. Download the Linux (x86_64) distribution from the [NOAA HYSPLIT Download Page](https://www.ready.noaa.gov/HYSPLIT_linuxtrial.php).
+    *   **HYSPLIT Binaries**: You **must** provide the **Linux Ubuntu 20.04.6 LTS** version of HYSPLIT. 
+        1. Download the **Linux Ubuntu 20.04.6 LTS** distribution from the [NOAA HYSPLIT Download Page](https://www.ready.noaa.gov/HYSPLIT_linuxtrial.php).
         2. Place the downloaded `.tar.gz` file (e.g., `hysplit_linux.tar.gz`) directly into the `hysplit/` folder in this repository.
         3. **Do not extract it.** The Skytap container will automatically extract it with the correct Linux permissions when it starts. (If you prefer to extract it manually, ensure `./hysplit/exec/hyts_std` is a valid path).
 
