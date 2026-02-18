@@ -25,16 +25,8 @@ if exist "hysplit\*.tgz" set BIN_FOUND=1
 
 if %BIN_FOUND% equ 0 (
     echo ❌ Error: HYSPLIT Linux binaries not found in .\hysplit\
-    echo Please download the Linux (x86_64^) version of HYSPLIT from NOAA 
+    echo Please download the Linux Ubuntu 20.04.6 LTS version of HYSPLIT from NOAA 
     echo and place the .tar.gz file (or extracted folder^) into the 'hysplit' folder.
-    pause
-    exit /b 1
-)
-
-:: 3. Check if bdyfiles (ASCDATA.CFG) exist
-if not exist "hysplit\bdyfiles\ASCDATA.CFG" (
-    echo ❌ Error: HYSPLIT boundary files not found in .\hysplit\bdyfiles\
-    echo Ensure the full HYSPLIT distribution is extracted into the 'hysplit' folder.
     pause
     exit /b 1
 )
