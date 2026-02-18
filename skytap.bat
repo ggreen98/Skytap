@@ -18,10 +18,15 @@ if not exist "Config.yaml" (
 )
 
 :: 2. Check if HYSPLIT binaries exist
-if not exist "hysplit\exec\hyts_std" (
-    echo ❌ Error: HYSPLIT Linux binaries not found in .\hysplit\exec\
+set BIN_FOUND=0
+if exist "hysplit\exec\hyts_std" set BIN_FOUND=1
+if exist "hysplit\*.tar.gz" set BIN_FOUND=1
+if exist "hysplit\*.tgz" set BIN_FOUND=1
+
+if %BIN_FOUND% equ 0 (
+    echo ❌ Error: HYSPLIT Linux binaries not found in .\hysplit\
     echo Please download the Linux (x86_64^) version of HYSPLIT from NOAA 
-    echo and extract it into the 'hysplit' folder.
+    echo and place the .tar.gz file (or extracted folder^) into the 'hysplit' folder.
     pause
     exit /b 1
 )

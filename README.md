@@ -15,9 +15,8 @@ Skytap is designed to be run as a portable tool. You do not need to install Pyth
     *   **Create Config.yaml**: Copy `Example.yaml` and rename the copy to `Config.yaml`. Open it to set your coordinates and dates.
     *   **Crucial Step**: You **must** create the `Config.yaml` file *before* running the launcher for the first time. If you run the launcher first, Docker may create a *folder* named `Config.yaml` by mistake, which you will need to delete.
     *   **HYSPLIT Binaries**: You **must** provide the **Linux (x86_64)** version of HYSPLIT (available from NOAA). Because Skytap runs inside a Linux Docker container, it requires Linux binaries even if your computer is running Windows or macOS. 
-        *   **How to extract `.tar.gz` on Windows**: Right-click and use **7-Zip** or **WinRAR**, or run `tar -xvzf filename.tar.gz` in Command Prompt.
-        *   **How to extract on macOS**: Simply double-click the file in Finder.
-        *   **Placement**: Place the extracted contents in a folder named `hysplit/` in the root directory. The pipeline specifically looks for executables in `./hysplit/exec/`.
+        *   **Automatic Extraction (Recommended)**: Simply place the downloaded `hysplit_linux.tar.gz` (or similar) file directly into the `hysplit/` folder. The Skytap container will automatically extract it with the correct Linux permissions when it starts.
+        *   **Manual Extraction**: If you prefer to extract it yourself, ensure the `exec/` folder is directly inside `./hysplit/` (e.g., `./hysplit/exec/hyts_std` should be a valid path).
 
 3.  **Run**:
     *   **Windows**: Double-click `skytap.bat`.

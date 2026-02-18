@@ -294,6 +294,59 @@ def setup_hysplit_dirs(cfg):
         if not (dst_bdy / "ASCDATA.CFG").exists():
              print(f"⚠️  Warning: {dst_bdy} exists but is missing ASCDATA.CFG.")
 
+def ensure_hysplit_binaries(cfg):
+    """
+    Checks if HYSPLIT binaries are present. If missing, looks for a .tar.gz 
+    archive in the hysplit folder and extracts it automatically.
+    This handles the case where Linux binaries are downloaded on Windows 
+    and need to be extracted inside the Linux container to preserve permissions.
+    """
+    hysplit_root = Path(cfg.get("hysplit", {}).get("working_dir", "hysplit"))
+    exec_dir = hysplit_root / "exec"
+    hyts_std = exec_dir / "hyts_std"
+
+    if hyts_std.exists():
+        return
+
+    print("🔍 HYSPLIT binaries not found. Checking for archives...")
+    
+    # Look for any .tar.gz or .tgz file in the hysplit directory
+    archives = list(hysplit_root.glob("*.tar.gz")) + list(hysplit_root.glob("*.tgz"))
+    
+    if not archives:
+        print(f"❌ Error: No HYSPLIT binaries or archives found in {hysplit_root}")
+        print("   Please place the HYSPLIT Linux .tar.gz file in the 'hysplit' folder.")
+        sys.exit(1)
+
+    archive_path = archives[0]
+    print(f"📦 Found archive: {archive_path.name}. Extracting inside container...")
+    
+    try:
+        # We use subprocess with 'tar' because it's available in the Docker image
+        # and handles Linux file permissions/symlinks better than zipfile/tarfile modules on some hosts.
+        subprocess.run(["tar", "-xvzf", str(archive_path), "-C", str(hysplit_root)], check=True)
+        print("✅ Extraction complete.")
+        
+        # Verify again
+        if not hyts_std.exists():
+            # Sometimes tarballs have a nested folder structure like hysplit/hysplit/...
+            # Let's try to find it and move it
+            nested = list(hysplit_root.glob("**/exec/hyts_std"))
+            if nested:
+                actual_exec_parent = nested[0].parent.parent
+                print(f"📂 Found nested HYSPLIT structure at {actual_exec_parent}. Moving files...")
+                for item in actual_exec_parent.iterdir():
+                    dest = hysplit_root / item.name
+                    if dest.exists():
+                        if dest.is_dir(): shutil.rmtree(dest)
+                        else: dest.unlink()
+                    shutil.move(str(item), str(hysplit_root))
+                print("✅ Files moved to root 'hysplit' directory.")
+
+    except Exception as e:
+        print(f"❌ Failed to extract HYSPLIT: {e}")
+        sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="Skytap Controller")
     parser.add_argument("--yes", "-y", action="store_true", help="Automatically answer 'yes' to all confirmation prompts.")
@@ -352,6 +405,7 @@ def main():
     print(f"\nTotal ARL files to process: {total_files}")
     
     # --- 3.5 Setup HYSPLIT Environment ---
+    ensure_hysplit_binaries(cfg)
     setup_hysplit_dirs(cfg)
 
     # --- 4. Processing Loop ---

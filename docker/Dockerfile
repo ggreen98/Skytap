@@ -4,10 +4,12 @@ FROM python:3.9-slim
 # aria2: for downloading ARL files
 # libgfortran5: common runtime dependency for HYSPLIT binaries
 # procps: for ps command if needed by scripts
+# tar: for extracting HYSPLIT binaries (Skytap_Controller handles this automatically)
 RUN apt-get update && apt-get install -y \
     aria2 \
     libgfortran5 \
     procps \
+    tar \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
