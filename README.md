@@ -12,8 +12,12 @@ Skytap is designed to be run as a portable tool. You do not need to install Pyth
     Download the `skytap` (Mac/Linux) or `skytap.bat` (Windows) file from this repository.
     
 2.  **Configuration**:
-    *   Create a `Config.yaml` file in the same folder as the launcher (use `Example.yaml` as a template).
-    *   Ensure you have a `hysplit/` folder containing the **Linux** version of HYSPLIT binaries.
+    *   **Create Config.yaml**: Copy `Example.yaml` and rename the copy to `Config.yaml`. Open it to set your coordinates and dates.
+    *   **Crucial Step**: You **must** create the `Config.yaml` file *before* running the launcher for the first time. If you run the launcher first, Docker may create a *folder* named `Config.yaml` by mistake, which you will need to delete.
+    *   **HYSPLIT Binaries**: You **must** provide the **Linux (x86_64)** version of HYSPLIT (available from NOAA). Because Skytap runs inside a Linux Docker container, it requires Linux binaries even if your computer is running Windows or macOS. 
+        *   **How to extract `.tar.gz` on Windows**: Right-click and use **7-Zip** or **WinRAR**, or run `tar -xvzf filename.tar.gz` in Command Prompt.
+        *   **How to extract on macOS**: Simply double-click the file in Finder.
+        *   **Placement**: Place the extracted contents in a folder named `hysplit/` in the root directory. The pipeline specifically looks for executables in `./hysplit/exec/`.
 
 3.  **Run**:
     *   **Windows**: Double-click `skytap.bat`.
@@ -21,17 +25,16 @@ Skytap is designed to be run as a portable tool. You do not need to install Pyth
 
 The tool will automatically pull the latest image from the GitHub Container Registry and start processing.
 
-## Features
-
-*   **Rolling Window Workflow**: Maintains a small footprint of active meteorological files.
-*   **Parallel Processing**: Runs multiple HYSPLIT instances concurrently.
-*   **Zero-Install**: Runs entirely inside Docker via GHCR.
-*   **Resume Capability**: Tracks progress in `state.yaml`.
-
 ## Prerequisites
 
-*   **Docker Desktop** installed and running.
-*   **Linux HYSPLIT Binaries**: These must be placed in `./hysplit/exec/` on your host machine.
+*   **Docker Desktop**: Installed and running.
+*   **Linux HYSPLIT Binaries**: These are **required** and are not included in the repository due to licensing. You must place the Linux (x86_64) version of HYSPLIT into the `./hysplit/` directory. If the extraction creates a sub-folder, make sure the `exec/` folder is directly inside `./hysplit/` (e.g., `./hysplit/exec/hyts_std` should be a valid path).
+
+## Troubleshooting
+
+### "Config.yaml is a directory" error
+If you receive an error saying `Config.yaml` is a directory, it means you ran the script before creating the configuration file. Docker automatically creates a folder when a requested file mount is missing. 
+**To fix:** Delete the `Config.yaml` folder, create a new file named `Config.yaml` (using `Example.yaml` as a template), and run the script again.
 
 ## Output
 *   **Trajectory Files**: Saved to `./Trajectory_Files/`.

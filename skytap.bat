@@ -7,6 +7,33 @@ set IMAGE=ghcr.io/ggreen98/skytap:latest
 :: Get the directory where this script is located
 cd /d %~dp0
 
+echo 🔍 Running Pre-flight checks...
+
+:: 1. Check if Config.yaml exists
+if not exist "Config.yaml" (
+    echo ❌ Error: Config.yaml not found!
+    echo Please copy Example.yaml to Config.yaml and edit your settings.
+    pause
+    exit /b 1
+)
+
+:: 2. Check if HYSPLIT binaries exist
+if not exist "hysplit\exec\hyts_std" (
+    echo ❌ Error: HYSPLIT Linux binaries not found in .\hysplit\exec\
+    echo Please download the Linux (x86_64) version of HYSPLIT from NOAA 
+    echo and extract it into the 'hysplit' folder.
+    pause
+    exit /b 1
+)
+
+:: 3. Check if bdyfiles (ASCDATA.CFG) exist
+if not exist "hysplit\bdyfiles\ASCDATA.CFG" (
+    echo ❌ Error: HYSPLIT boundary files not found in .\hysplit\bdyfiles\
+    echo Ensure the full HYSPLIT distribution is extracted into the 'hysplit' folder.
+    pause
+    exit /b 1
+)
+
 :: Check if Docker is running
 docker info >nul 2>&1
 if %errorlevel% neq 0 (
@@ -21,6 +48,7 @@ echo 🔄 Checking for updates...
 docker pull %IMAGE%
 
 :: Run the container
+echo 🚀 Starting Skytap Pipeline...
 docker run -it --rm ^
   --platform linux/amd64 ^
   -v "%cd%/Config.yaml:/app/Config.yaml" ^
