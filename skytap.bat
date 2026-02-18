@@ -20,7 +20,7 @@ if not exist "Config.yaml" (
 :: 2. Check if HYSPLIT binaries exist
 if not exist "hysplit\exec\hyts_std" (
     echo ❌ Error: HYSPLIT Linux binaries not found in .\hysplit\exec\
-    echo Please download the Linux (x86_64) version of HYSPLIT from NOAA 
+    echo Please download the Linux (x86_64^) version of HYSPLIT from NOAA 
     echo and extract it into the 'hysplit' folder.
     pause
     exit /b 1
