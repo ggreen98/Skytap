@@ -14,9 +14,10 @@ Skytap is designed to be run as a portable tool. You do not need to install Pyth
 2.  **Configuration**:
     *   **Create Config.yaml**: Copy `Example.yaml` and rename the copy to `Config.yaml`. Open it to set your coordinates and dates.
     *   **Crucial Step**: You **must** create the `Config.yaml` file *before* running the launcher for the first time. If you run the launcher first, Docker may create a *folder* named `Config.yaml` by mistake, which you will need to delete.
-    *   **HYSPLIT Binaries**: You **must** provide the **Linux (x86_64)** version of HYSPLIT (available from NOAA). Because Skytap runs inside a Linux Docker container, it requires Linux binaries even if your computer is running Windows or macOS. 
-        *   **Automatic Extraction (Recommended)**: Simply place the downloaded `hysplit_linux.tar.gz` (or similar) file directly into the `hysplit/` folder. The Skytap container will automatically extract it with the correct Linux permissions when it starts.
-        *   **Manual Extraction**: If you prefer to extract it yourself, ensure the `exec/` folder is directly inside `./hysplit/` (e.g., `./hysplit/exec/hyts_std` should be a valid path).
+    *   **HYSPLIT Binaries**: You **must** provide the **Linux (x86_64)** version of HYSPLIT. 
+        1. Download the Linux (x86_64) distribution from the [NOAA HYSPLIT Download Page](https://www.ready.noaa.gov/HYSPLIT_linuxtrial.php).
+        2. Place the downloaded `.tar.gz` file (e.g., `hysplit_linux.tar.gz`) directly into the `hysplit/` folder in this repository.
+        3. **Do not extract it.** The Skytap container will automatically extract it with the correct Linux permissions when it starts. (If you prefer to extract it manually, ensure `./hysplit/exec/hyts_std` is a valid path).
 
 3.  **Run**:
     *   **Windows**: Double-click `skytap.bat`.
@@ -27,7 +28,7 @@ The tool will automatically pull the latest image from the GitHub Container Regi
 ## Prerequisites
 
 *   **Docker Desktop**: Installed and running.
-*   **Linux HYSPLIT Binaries**: These are **required** and are not included in the repository due to licensing. You must place the Linux (x86_64) version of HYSPLIT into the `./hysplit/` directory. If the extraction creates a sub-folder, make sure the `exec/` folder is directly inside `./hysplit/` (e.g., `./hysplit/exec/hyts_std` should be a valid path).
+*   **Linux HYSPLIT Binaries**: These are **required** and are not included in the repository due to licensing. See the Quick Start section above for instructions on where to download and where to place the `.tar.gz` file.
 
 ## Troubleshooting
 
