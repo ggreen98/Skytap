@@ -19,7 +19,7 @@ Workflow:
     - **Rotate**: Deletes the oldest meteorological files and downloads new ones to shift the window forward.
 
 Usage:
-    python Skytap_Controller.py [--yes]
+    python Skytap_Controller.py [--yes] [--check]
 """
 
 import argparse
@@ -27,12 +27,21 @@ import yaml
 import subprocess
 import sys
 import shutil
+import time
 from pathlib import Path
 import re
 from datetime import datetime
 
 # Local import
 import ARL_download_controller
+
+
+def _tlog(log_path: Path, message: str) -> None:
+    """Append a timestamped line to the timing log and print it."""
+    line = f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {message}"
+    print(line, flush=True)
+    with log_path.open("a") as f:
+        f.write(line + "\n")
 
 
 def load_config(config_path: Path = Path("Config.yaml"), ex_cfg: Path = Path("Example.yaml")) -> tuple[dict, dict]:
@@ -283,16 +292,16 @@ def setup_hysplit_dirs(cfg):
     # Dest bdyfiles (in temp dir)
     dst_bdy = temp_dir / "bdyfiles"
     
-    if not dst_bdy.exists():
+    # Check for ASCDATA.CFG specifically — the directory can exist but be empty
+    # (e.g. if Docker volume pre-created it before the copy ran).
+    if not (dst_bdy / "ASCDATA.CFG").exists():
         if src_bdy.exists():
+            if dst_bdy.exists():
+                shutil.rmtree(dst_bdy)
             print(f"📂 Copying bdyfiles from {src_bdy} to {dst_bdy}...")
             shutil.copytree(src_bdy, dst_bdy)
         else:
             print(f"⚠️  Warning: Could not find HYSPLIT bdyfiles at {src_bdy}. Runs might fail.")
-    else:
-        # Optional: Check if ASCDATA.CFG exists inside
-        if not (dst_bdy / "ASCDATA.CFG").exists():
-             print(f"⚠️  Warning: {dst_bdy} exists but is missing ASCDATA.CFG.")
 
 def ensure_hysplit_binaries(cfg):
     """
@@ -347,16 +356,82 @@ def ensure_hysplit_binaries(cfg):
         print(f"❌ Failed to extract HYSPLIT: {e}")
         sys.exit(1)
 
+def preflight_check(cfg: dict, config_missing: list) -> None:
+    """
+    Validates config and checks prerequisites without starting a pipeline run.
+    Exits 0 if all checks pass, 1 if any fail.
+    """
+    ok = True
+    print("\n=== Skytap Pre-flight Check ===\n")
+
+    # 1. Config
+    if not config_missing:
+        print("  ✅ Config.yaml loaded and validated")
+    else:
+        print(f"  ❌ Config.yaml has {len(config_missing)} missing key(s) — see above")
+        ok = False
+
+    # 2. HYSPLIT binary or archive
+    hysplit_root = Path(cfg.get("hysplit", {}).get("working_dir", "hysplit"))
+    hyts_std = hysplit_root / "exec" / "hyts_std"
+    archives = list(hysplit_root.glob("*.tar.gz")) + list(hysplit_root.glob("*.tgz"))
+    if hyts_std.exists():
+        print(f"  ✅ HYSPLIT binary found: {hyts_std}")
+    elif archives:
+        print(f"  ✅ HYSPLIT archive found (will extract on first run): {archives[0].name}")
+    else:
+        print(f"  ❌ HYSPLIT binary not found in {hysplit_root}/")
+        print( "     → Download Linux Ubuntu 20.04.6 LTS from https://www.ready.noaa.gov/HYSPLIT_linuxtrial.php")
+        print(f"     → Place the .tar.gz in the '{hysplit_root}/' folder")
+        ok = False
+
+    # 3. bdyfiles (only warn if HYSPLIT itself is present)
+    src_bdy = hysplit_root / "bdyfiles"
+    if (hyts_std.exists() or archives) and not (src_bdy / "ASCDATA.CFG").exists():
+        print(f"  ⚠️  bdyfiles/ASCDATA.CFG not found at {src_bdy} — may be inside archive (OK)")
+
+    # 4. Docker
+    docker_result = subprocess.run(["docker", "info"], capture_output=True)
+    if docker_result.returncode == 0:
+        print("  ✅ Docker is running")
+    else:
+        print("  ❌ Docker is not running or not installed")
+        print("     → Start Docker Desktop and try again")
+        ok = False
+
+    # 5. ARL file list
+    arl_list = Path(cfg.get("text_file_dir", "txt_files")) / cfg.get("full_ARL_file_list", "ARLfilelist.txt")
+    list_valid = validate_arl_list(arl_list, cfg['start_date'], cfg['end_date'])
+    if list_valid:
+        with arl_list.open() as f:
+            count = sum(1 for line in f if line.strip())
+        print(f"  ✅ ARL file list ready ({count} files, {cfg['start_date']} – {cfg['end_date']})")
+    else:
+        print(f"  ⚠️  ARL file list missing or outdated — run without --check to regenerate")
+
+    print()
+    if ok:
+        print("✅ All checks passed. Ready to run.\n")
+        sys.exit(0)
+    else:
+        print("❌ Some checks failed. Fix the issues above before running.\n")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Skytap Controller")
     parser.add_argument("--yes", "-y", action="store_true", help="Automatically answer 'yes' to all confirmation prompts.")
+    parser.add_argument("--check", action="store_true", help="Validate config and check prerequisites without running.")
     args = parser.parse_args()
 
     cfg, ex_cfg = load_config()
-    
+
     # --- 1. Validation ---
-    validate_config(cfg, ex_cfg)
-    
+    missing = validate_config(cfg, ex_cfg)
+
+    if args.check:
+        preflight_check(cfg, missing)  # exits internally
+
     if not args.yes and not prompt_yes_no("\nProceed with this configuration? [y/n]: "):
         sys.exit(0)
 
@@ -421,6 +496,11 @@ def main():
     pipeline_cfg = cfg.get("pipeline", {})
     window_size = pipeline_cfg.get("window_size", 6)
     step = pipeline_cfg.get("window_step", 4)
+
+    # --- Timing log ---
+    timing_log = Path(cfg.get("text_file_dir", "txt_files")) / "pipeline_timing.log"
+    pipeline_start = time.perf_counter()
+    _tlog(timing_log, f"=== PIPELINE START | {total_files} ARL files | window={window_size} step={step} ===")
     state_path_str = cfg.get("state_file", "state.yaml")
     state_path = Path(state_path_str)
     
@@ -460,21 +540,58 @@ def main():
         return
 
     print(f"\n=== Initial Batch: Downloading files {current_idx} to {batch_end} ===")
+    _t = time.perf_counter()
     ARL_download_controller.download_arl_files(first_batch, download_dir=met_dir_str)
+    _e = time.perf_counter() - _t
+    _tlog(timing_log, f"DOWNLOAD  iter=0 (initial)  files={len(first_batch)}  elapsed={_e:.1f}s ({_e/60:.1f}m)")
 
     # The 'on_disk' list tracks what urls are currently downloaded
     on_disk_urls = list(first_batch)
 
+    iteration = 1
     while True:
+        # Sync the temp file list to ALL currently on-disk files before HYSPLIT_Controller reads it.
+        # Bug fix: download_arl_files() only writes the newest batch to this file, but
+        # HYSPLIT_Controller.get_date_range() needs the full window (kept + new files) to
+        # compute the correct valid time range and avoid 12-hour gaps between iterations.
+        temp_list_path = Path(cfg["text_file_dir"]) / cfg["temp_arl_file_list"]
+        with temp_list_path.open("w") as f:
+            for url in on_disk_urls:
+                f.write(url + "\n")
+
         # Run HYSPLIT Logic
         print("\n--- Running HYSPLIT Controller ---")
         # We call the controller as a subprocess to ensure a clean state for each batch.
+        _t = time.perf_counter()
         ret = subprocess.run([sys.executable, "HYSPLIT_Controller.py"])
+        _e = time.perf_counter() - _t
+        _tlog(timing_log, f"HYSPLIT   iter={iteration}  elapsed={_e:.1f}s ({_e/60:.1f}m)")
+
+        # --- ETA ---
+        files_covered = min(current_idx + window_size, total_files)
+        pct = files_covered / total_files * 100
+        elapsed_total = time.perf_counter() - pipeline_start
+        eta_s = (elapsed_total / (files_covered / total_files)) - elapsed_total
+        _tlog(timing_log, f"          progress={files_covered}/{total_files} ({pct:.0f}%)  ETA ~{eta_s/60:.0f}m ({eta_s/3600:.1f}h)")
+
+        # --- Trajectory validation ---
+        traj_root = Path(cfg.get("hysplit", {}).get("traj_root", "Trajectory_Files"))
+        valid_ct = small_ct = 0
+        if traj_root.exists():
+            for _tf in traj_root.rglob("*"):
+                if _tf.is_file() and not _tf.name.startswith("."):
+                    if _tf.stat().st_size >= 500:
+                        valid_ct += 1
+                    else:
+                        small_ct += 1
+        _warn = "  ⚠️  SUSPECT FILES DETECTED" if small_ct else ""
+        _tlog(timing_log, f"          trajectories total={valid_ct + small_ct}  valid={valid_ct}  suspect(<500B)={small_ct}{_warn}")
+
         if ret.returncode != 0:
             print("HYSPLIT_Controller.py reported an error.")
             if not prompt_yes_no("HYSPLIT run failed. Continue to next batch? [y/n]: "):
                 sys.exit(1)
-        
+
         print("\n✅ HYSPLIT processing complete. Trajectories saved. Starting cleanup...")
 
         # Cleanup HYSPLIT Dirs
@@ -486,6 +603,8 @@ def main():
             print("All files processed.")
             state["current_idx"] = total_files
             save_state(state_path, state)
+            _e = time.perf_counter() - pipeline_start
+            _tlog(timing_log, f"=== PIPELINE END | total={_e:.1f}s ({_e/60:.1f}m) ({_e/3600:.2f}h) ===\n")
             break
 
         # Prepare for next loop
@@ -517,11 +636,15 @@ def main():
             break
 
         print(f"\n=== Next Batch: Downloading {len(new_batch)} new files (Index {dl_start} to {dl_end}) ===")
+        _t = time.perf_counter()
         ARL_download_controller.download_arl_files(new_batch, download_dir=met_dir_str)
-        
+        _e = time.perf_counter() - _t
+        _tlog(timing_log, f"DOWNLOAD  iter={iteration}  files={len(new_batch)}  elapsed={_e:.1f}s ({_e/60:.1f}m)")
+
         # Update tracking
         # The files on disk are now the kept ones + new ones
         on_disk_urls = on_disk_urls[step:] + new_batch
+        iteration += 1
 
 
 if __name__ == "__main__":

@@ -124,7 +124,7 @@ def write_control(
     start_time: datetime,
     lat: float,
     lon: float,
-    height_m: float,
+    heights: list[float],
     duration_h: int,
     met_dir: Path,
     top_agl_m: float = 10000.0,
@@ -132,10 +132,10 @@ def write_control(
 ) -> Path:
     """
     Write a HYSPLIT CONTROL file for a single trajectory run.
-    
+
     The CONTROL file tells HYSPLIT:
     1. Start time
-    2. Start location
+    2. Start locations (one per height; all share the same lat/lon)
     3. Run duration
     4. Meteorology file locations
     5. Output file name
@@ -152,11 +152,12 @@ def write_control(
         # 1) Start time (UTC)
         f.write(f"{start_time:%Y %m %d %H}\n")
 
-        # 2) Number of starting locations (1)
-        f.write("1\n")
+        # 2) Number of starting locations (one per height)
+        f.write(f"{len(heights)}\n")
 
-        # 3) Starting location: lat lon height(m)
-        f.write(f"{lat:.3f} {lon:.3f} {height_m:.2f}\n")
+        # 3) Starting locations: lat lon height(m), one line per height
+        for h in heights:
+            f.write(f"{lat:.3f} {lon:.3f} {h:.2f}\n")
 
         # 4) Duration (hours), negative = backward
         f.write(f"{duration_h}\n")
@@ -171,7 +172,15 @@ def write_control(
         met_files = sorted([mf for mf in os.listdir(met_dir) if 'hrrr' in mf])
         if not met_files:
              raise FileNotFoundError(f"No ARL data files found in {met_dir}. HYSPLIT cannot run without met data.")
-        
+
+        # Cap at 6 files (matching the rolling window_size). The rolling window guarantees
+        # at most 6 ARL files on disk; if more are present due to an unclean state, take
+        # the 6 most recent (sorted by filename = sorted by date) so the trajectory's
+        # end time is always covered.
+        if len(met_files) > 6:
+            print(f"[WARN] {len(met_files)} ARL files found in {met_dir}; capping CONTROL file at 6.")
+            met_files = met_files[-6:]
+
         f.write(f"{len(met_files)}\n")
 
         # 8) For each met file: directory line, then filename line
@@ -188,31 +197,49 @@ def write_control(
 
 def make_run_dirs(cfg, valid_datetimes):
     """
-    Iterates through all sites in config and creates run directories for 
-    every valid time slot.
+    Iterates through all sites in config and creates run directories for
+    every valid time slot that falls within each site's operational date range.
     """
     for site in cfg['site_hysplit_configs']:
 
         start = datetime.strptime(cfg['site_hysplit_configs'][site]['start_date'], "%Y-%m-%d")
         end   = datetime.strptime(cfg['site_hysplit_configs'][site]['end_date'], "%Y-%m-%d")
 
-        # Only create runs if the site's date range overlaps with the valid met data
-        if start <= valid_datetimes[0] and end >= valid_datetimes[-1]:
-            print(f"Writing HYSPLIT CONTROL files for site: {site}")
+        # Filter to only the datetimes that fall within this site's operational period.
+        # Bug fix: the previous all-or-nothing check skipped entire batches when a site's
+        # start or end date fell mid-window, causing missing trajectories at site boundaries.
+        site_datetimes = [dt for dt in valid_datetimes if start <= dt <= end]
 
-            for dt in valid_datetimes:
-                write_control(
-                    make_run_dir(site, dt),
-                    dt,
-                    cfg['site_hysplit_configs'][site]['lat'],
-                    cfg['site_hysplit_configs'][site]['lon'],
-                    cfg['site_hysplit_configs'][site]['start_height'],
-                    cfg['site_hysplit_configs'][site]['duration'],
-                    Path(cfg['hysplit']['met_dir']),
-                    top_agl_m=cfg['hysplit'].get('top_of_model', 10000.0),
-                    vert_motion=cfg['hysplit'].get('vert_motion', 0)
-                    )
-    
+        # Filter to only the UTC hours specified in run_hours (e.g. daylight-only runs).
+        # Defaults to all 24 hours if the key is absent.
+        run_hours = set(cfg.get('run_hours', range(24)))
+        site_datetimes = [dt for dt in site_datetimes if dt.hour in run_hours]
+
+        if not site_datetimes:
+            continue
+
+        print(f"Writing HYSPLIT CONTROL files for site: {site} ({len(site_datetimes)} runs)")
+
+        site_cfg = cfg['site_hysplit_configs'][site]
+
+        # Support both new list format (start_heights) and old scalar (start_height).
+        heights = site_cfg.get('start_heights')
+        if heights is None:
+            heights = [site_cfg['start_height']]
+
+        for dt in site_datetimes:
+            write_control(
+                make_run_dir(site, dt),
+                dt,
+                site_cfg['lat'],
+                site_cfg['lon'],
+                heights,
+                site_cfg['duration'],
+                Path(cfg['hysplit']['met_dir']),
+                top_agl_m=cfg['hysplit'].get('top_of_model', 10000.0),
+                vert_motion=cfg['hysplit'].get('vert_motion', 0)
+                )
+
     print(f"All CONTROL files written for period {valid_datetimes[0]} to {valid_datetimes[-1]}")
 
 def remove_run_dirs(temp_root: Path):

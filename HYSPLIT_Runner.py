@@ -46,7 +46,7 @@ TRAJ_ROOT.mkdir(parents=True, exist_ok=True)
 if not HYSPLIT_EXE.exists():
     raise FileNotFoundError(f"HYSPLIT executable not found: {HYSPLIT_EXE}")
 
-def run_hysplit_in_dir(run_dir: Path, timeout_s: int = 600) -> tuple[str, int, str]:
+def run_hysplit_in_dir(run_dir: Path, timeout_s: int = 600) -> tuple[Path, str, int, str]:
     """
     Executes HYSPLIT within a specific temporary directory.
 
@@ -55,14 +55,14 @@ def run_hysplit_in_dir(run_dir: Path, timeout_s: int = 600) -> tuple[str, int, s
         timeout_s (int): Maximum runtime in seconds before killing the process.
 
     Returns:
-        tuple: (run_dir_name, return_code, debug_message)
+        tuple: (run_dir, run_dir_name, return_code, debug_message)
     """
     start_ts = datetime.now().strftime("%H:%M:%S")
     print(f"[START {start_ts}] {run_dir.name}", flush=True)
 
     ctl = run_dir / "CONTROL"
     if not ctl.exists():
-        return run_dir.name, 999, "Missing CONTROL"
+        return run_dir, run_dir.name, 999, "Missing CONTROL"
 
     # HYSPLIT output filename is defined in CONTROL as the directory name
     output_filename = run_dir.name
@@ -93,9 +93,9 @@ def run_hysplit_in_dir(run_dir: Path, timeout_s: int = 600) -> tuple[str, int, s
             rc = proc.returncode
         except subprocess.TimeoutExpired:
             print(f"[TIMEOUT] {run_dir.name}", flush=True)
-            return run_dir.name, 124, f"Timeout after {timeout_s}s"
+            return run_dir, run_dir.name, 124, f"Timeout after {timeout_s}s"
         except FileNotFoundError as e:
-            return run_dir.name, 127, f"Executable not found: {e}"
+            return run_dir, run_dir.name, 127, f"Executable not found: {e}"
 
     end_ts = datetime.now().strftime("%H:%M:%S")
     
