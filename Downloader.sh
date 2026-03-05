@@ -5,8 +5,10 @@ URL_FILE="txt_files/ARL_temp_file_list.txt"
 DEST_DIR="${DEST_DIR:-ARL_Files}"
 mkdir -p "$DEST_DIR"
 
-# Tune these:
-MAX_FILES_AT_ONCE=4      # maps to aria2c -j (how many files)
+# PARALLEL_DOWNLOADS controls -j (files at once).
+# Set to 1 on machines with spinning HDDs to avoid seek thrashing.
+# Set to 4 (default) on SSDs for maximum throughput.
+MAX_FILES_AT_ONCE="${PARALLEL_DOWNLOADS:-4}"
 CONNS_PER_FILE=16        # aria2c -x
 SPLITS_PER_FILE=16       # aria2c -s
 

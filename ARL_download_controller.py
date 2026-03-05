@@ -17,7 +17,7 @@ import subprocess
 import os
 import sys
 
-def download_arl_files(urls, temp_list_path="txt_files/ARL_temp_file_list.txt", download_dir="ARL_Files"):
+def download_arl_files(urls, temp_list_path="txt_files/ARL_temp_file_list.txt", download_dir="ARL_Files", parallel_downloads=4):
     """
     Orchestrates the download of a list of ARL files.
 
@@ -54,10 +54,11 @@ def download_arl_files(urls, temp_list_path="txt_files/ARL_temp_file_list.txt", 
     # Run downloader.sh
     print("\nRunning Downloader.sh...")
     
-    # Pass DEST_DIR to the shell script via environment variable
+    # Pass settings to the shell script via environment variables
     env = os.environ.copy()
     env["DEST_DIR"] = download_dir
-    
+    env["PARALLEL_DOWNLOADS"] = str(parallel_downloads)
+
     result = subprocess.run(["bash", "Downloader.sh"], env=env)
 
     if result.returncode != 0:

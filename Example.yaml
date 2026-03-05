@@ -25,8 +25,9 @@ state_file: "state.yaml"                     # Tracks pipeline state (e.g. setup
 
 # --- Pipeline Configuration ---
 pipeline:
-  window_size: 6   # Number of ARL meteorological files to keep on disk simultaneously (Rolling Window)
-  window_step: 4   # Number of files to delete/download in each cycle
+  window_size: 6          # Number of ARL meteorological files to keep on disk simultaneously (Rolling Window)
+  window_step: 4          # Number of files to delete/download in each cycle
+  parallel_downloads: 4   # aria2c -j: files downloaded simultaneously. Use 1 on spinning HDDs to avoid seek thrashing.
 
 # --- HYSPLIT Configuration ---
 hysplit:

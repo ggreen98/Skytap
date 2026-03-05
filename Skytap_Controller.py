@@ -496,6 +496,7 @@ def main():
     pipeline_cfg = cfg.get("pipeline", {})
     window_size = pipeline_cfg.get("window_size", 6)
     step = pipeline_cfg.get("window_step", 4)
+    parallel_downloads = pipeline_cfg.get("parallel_downloads", 4)
 
     # --- Timing log ---
     timing_log = Path(cfg.get("text_file_dir", "txt_files")) / "pipeline_timing.log"
@@ -541,7 +542,7 @@ def main():
 
     print(f"\n=== Initial Batch: Downloading files {current_idx} to {batch_end} ===")
     _t = time.perf_counter()
-    ARL_download_controller.download_arl_files(first_batch, download_dir=met_dir_str)
+    ARL_download_controller.download_arl_files(first_batch, download_dir=met_dir_str, parallel_downloads=parallel_downloads)
     _e = time.perf_counter() - _t
     _tlog(timing_log, f"DOWNLOAD  iter=0 (initial)  files={len(first_batch)}  elapsed={_e:.1f}s ({_e/60:.1f}m)")
 
@@ -637,7 +638,7 @@ def main():
 
         print(f"\n=== Next Batch: Downloading {len(new_batch)} new files (Index {dl_start} to {dl_end}) ===")
         _t = time.perf_counter()
-        ARL_download_controller.download_arl_files(new_batch, download_dir=met_dir_str)
+        ARL_download_controller.download_arl_files(new_batch, download_dir=met_dir_str, parallel_downloads=parallel_downloads)
         _e = time.perf_counter() - _t
         _tlog(timing_log, f"DOWNLOAD  iter={iteration}  files={len(new_batch)}  elapsed={_e:.1f}s ({_e/60:.1f}m)")
 

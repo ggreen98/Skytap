@@ -23,6 +23,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import yaml
 import time
 from datetime import datetime
+import psutil
 
 CONFIG_PATH = Path("Config.yaml")
 
@@ -178,9 +179,14 @@ def HysplitRunner(max_workers: int = 4, limit: int | None = None):
 
 if __name__ == "__main__":
 
-    # Default workers to 12 if not specified
-    workers = cfg.get("hysplit", {}).get("max_workers", 12)
-    limit = None 
+    # Cap max_workers at physical core count to avoid context-switching overhead.
+    # HYSPLIT is CPU-bound; hyperthreads don't help and too many workers hurts.
+    configured_workers = cfg.get("hysplit", {}).get("max_workers", 4)
+    physical_cores = psutil.cpu_count(logical=False) or 1
+    workers = min(configured_workers, physical_cores)
+    if workers < configured_workers:
+        print(f"[INFO] max_workers capped at {workers} physical cores (configured: {configured_workers})")
+    limit = None
 
     t0 = time.perf_counter()
     print(f"\n=== START {datetime.now()} | workers={workers} ===\n")
