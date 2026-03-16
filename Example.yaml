@@ -76,13 +76,13 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   PAO:
-    lat: 40.181610
-    lon: -104.726130
+    lat: 40.181625
+    lon: -104.72613
     start_heights: [100]
     duration: -12
     name: "Platteville Atmospheric Observatory"
-    start_date: "2015-01-01"
-    end_date: "2026-01-01"
+    start_date: "2020-06-12"
+    end_date: "2024-01-31"
 
   CAMP:
     lat: 39.751184
@@ -94,8 +94,8 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   CASA:
-    lat: 39.779460
-    lon: -105.005124
+    lat: 39.77949
+    lon: -105.00518
     start_heights: [100]
     duration: -12
     name: "La Casa"
@@ -121,8 +121,8 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   AURE:
-    lat: 39.638529
-    lon: -104.569074
+    lat: 39.638522
+    lon: -104.569335
     start_heights: [100]
     duration: -12
     name: "Aurora East"
@@ -139,8 +139,8 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   I25GLO:
-    lat: 39.785622
-    lon: -104.988460
+    lat: 39.7861
+    lon: -104.9886
     start_heights: [100]
     duration: -12
     name: "I-25 Globeville"
@@ -148,8 +148,8 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   I25DEN:
-    lat: 39.732146
-    lon: -105.015317
+    lat: 39.73217
+    lon: -105.0153
     start_heights: [100]
     duration: -12
     name: "I-25 Denver"
@@ -157,8 +157,8 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   BRZ:
-    lat: 40.070
-    lon: -105.220
+    lat: 40.070016
+    lon: -105.220238
     start_heights: [100]
     duration: -12
     name: "Boulder Reservoir"
@@ -184,17 +184,17 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   LUR:
-    lat: 40.176
-    lon: -105.048
+    lat: 40.176123
+    lon: -105.047522
     start_heights: [100]
     duration: -12
     name: "Longmont Union Reservoir"
-    start_date: "2019-02-01"
+    start_date: "2019-12-01"
     end_date: "2026-01-01"
 
   BSE:
-    lat: 39.984
-    lon: -105.037
+    lat: 39.984469
+    lon: -105.036507
     start_heights: [100]
     duration: -12
     name: "Broomfield Soaring Eagle Park"
@@ -216,7 +216,7 @@ site_hysplit_configs:
     start_heights: [100]
     duration: -12
     name: "Erie Community Center"
-    start_date: "2021-10-01"
+    start_date: "2021-09-28"
     end_date: "2026-01-01"
 
   RFN:
@@ -229,8 +229,8 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   WBY:
-    lat: 39.838199
-    lon: -104.949840
+    lat: 39.838119
+    lon: -104.94984
     start_heights: [100]
     duration: -12
     name: "Welby"
@@ -238,10 +238,19 @@ site_hysplit_configs:
     end_date: "2026-01-01"
 
   NREL:
-    lat: 39.743207
-    lon: -105.179093
+    lat: 39.743724
+    lon: -105.177989
     start_heights: [100]
     duration: -12
     name: "NREL - South Table Mtn."
+    start_date: "2015-01-01"
+    end_date: "2026-01-01"
+
+  ROMO:
+    lat: 40.27813
+    lon: -105.54564
+    start_heights: [100]
+    duration: -12
+    name: "Rocky Mountain National Park - Beaver Meadows"
     start_date: "2015-01-01"
     end_date: "2026-01-01"
